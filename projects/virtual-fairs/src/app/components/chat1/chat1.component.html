@@ -1,0 +1,13 @@
+<mat-grid-list cols="2" rowHeight="2:1">
+  <mat-grid-tile>
+    <p class="video-description">local:</p>
+    <video #localVideo [autoplay]="true"></video>
+  </mat-grid-tile>
+  <mat-grid-tile>
+    <p class="video-description">remote:</p>
+    <video #remoteVideo [autoplay]="true"></video>
+  </mat-grid-tile>
+</mat-grid-list>
+<call-settings [options]="options"></call-settings>
+
+<!--<video #peerVideo *ngFor="let peer of peers"></video> -->

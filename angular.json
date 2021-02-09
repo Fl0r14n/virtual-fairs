@@ -3,5 +3,178 @@
   "version": 1,
   "newProjectRoot": "projects",
   "projects": {
-  }
+    "virtual-fairs": {
+      "projectType": "application",
+      "schematics": {
+        "@schematics/angular:component": {
+          "style": "scss"
+        }
+      },
+      "root": "projects/virtual-fairs",
+      "sourceRoot": "projects/virtual-fairs/src",
+      "prefix": "app",
+      "architect": {
+        "build": {
+          "builder": "@angular-devkit/build-angular:browser",
+          "options": {
+            "outputPath": "dist/virtual-fairs/browser",
+            "index": "projects/virtual-fairs/src/index.html",
+            "main": "projects/virtual-fairs/src/main.ts",
+            "polyfills": "projects/virtual-fairs/src/polyfills.ts",
+            "tsConfig": "projects/virtual-fairs/tsconfig.app.json",
+            "aot": true,
+            "assets": [
+              "projects/virtual-fairs/src/favicon.ico",
+              "projects/virtual-fairs/src/assets",
+              "projects/virtual-fairs/src/manifest.webmanifest"
+            ],
+            "styles": [
+              "projects/virtual-fairs/src/styles.scss"
+            ],
+            "scripts": []
+          },
+          "configurations": {
+            "production": {
+              "fileReplacements": [
+                {
+                  "replace": "projects/virtual-fairs/src/environments/environment.ts",
+                  "with": "projects/virtual-fairs/src/environments/environment.prod.ts"
+                }
+              ],
+              "optimization": true,
+              "outputHashing": "all",
+              "sourceMap": false,
+              "namedChunks": false,
+              "extractLicenses": true,
+              "vendorChunk": false,
+              "buildOptimizer": true,
+              "budgets": [
+                {
+                  "type": "initial",
+                  "maximumWarning": "2mb",
+                  "maximumError": "5mb"
+                },
+                {
+                  "type": "anyComponentStyle",
+                  "maximumWarning": "6kb",
+                  "maximumError": "10kb"
+                }
+              ],
+              "serviceWorker": true,
+              "ngswConfigPath": "projects/virtual-fairs/ngsw-config.json"
+            }
+          }
+        },
+        "serve": {
+          "builder": "@angular-devkit/build-angular:dev-server",
+          "options": {
+            "browserTarget": "virtual-fairs:build"
+          },
+          "configurations": {
+            "production": {
+              "browserTarget": "virtual-fairs:build:production"
+            }
+          }
+        },
+        "extract-i18n": {
+          "builder": "@angular-devkit/build-angular:extract-i18n",
+          "options": {
+            "browserTarget": "virtual-fairs:build"
+          }
+        },
+        "test": {
+          "builder": "@angular-devkit/build-angular:karma",
+          "options": {
+            "main": "projects/virtual-fairs/src/test.ts",
+            "polyfills": "projects/virtual-fairs/src/polyfills.ts",
+            "tsConfig": "projects/virtual-fairs/tsconfig.spec.json",
+            "karmaConfig": "projects/virtual-fairs/karma.conf.js",
+            "assets": [
+              "projects/virtual-fairs/src/favicon.ico",
+              "projects/virtual-fairs/src/assets",
+              "projects/virtual-fairs/src/manifest.webmanifest"
+            ],
+            "styles": [
+              "projects/virtual-fairs/src/styles.scss"
+            ],
+            "scripts": []
+          }
+        },
+        "lint": {
+          "builder": "@angular-devkit/build-angular:tslint",
+          "options": {
+            "tsConfig": [
+              "projects/virtual-fairs/tsconfig.app.json",
+              "projects/virtual-fairs/tsconfig.spec.json",
+              "projects/virtual-fairs/e2e/tsconfig.json",
+              "projects/virtual-fairs/tsconfig.server.json"
+            ],
+            "exclude": [
+              "**/node_modules/**"
+            ]
+          }
+        },
+        "e2e": {
+          "builder": "@angular-devkit/build-angular:protractor",
+          "options": {
+            "protractorConfig": "projects/virtual-fairs/e2e/protractor.conf.js",
+            "devServerTarget": "virtual-fairs:serve"
+          },
+          "configurations": {
+            "production": {
+              "devServerTarget": "virtual-fairs:serve:production"
+            }
+          }
+        },
+        "server": {
+          "builder": "@angular-devkit/build-angular:server",
+          "options": {
+            "outputPath": "dist/virtual-fairs/server",
+            "main": "projects/virtual-fairs/server.ts",
+            "tsConfig": "projects/virtual-fairs/tsconfig.server.json"
+          },
+          "configurations": {
+            "production": {
+              "outputHashing": "media",
+              "fileReplacements": [
+                {
+                  "replace": "projects/virtual-fairs/src/environments/environment.ts",
+                  "with": "projects/virtual-fairs/src/environments/environment.prod.ts"
+                }
+              ],
+              "sourceMap": false,
+              "optimization": true
+            }
+          }
+        },
+        "serve-ssr": {
+          "builder": "@nguniversal/builders:ssr-dev-server",
+          "options": {
+            "browserTarget": "virtual-fairs:build",
+            "serverTarget": "virtual-fairs:server"
+          },
+          "configurations": {
+            "production": {
+              "browserTarget": "virtual-fairs:build:production",
+              "serverTarget": "virtual-fairs:server:production"
+            }
+          }
+        },
+        "prerender": {
+          "builder": "@nguniversal/builders:prerender",
+          "options": {
+            "browserTarget": "virtual-fairs:build:production",
+            "serverTarget": "virtual-fairs:server:production",
+            "routes": [
+              "/"
+            ]
+          },
+          "configurations": {
+            "production": {}
+          }
+        }
+      }
+    }
+  },
+  "defaultProject": "virtual-fairs"
 }
