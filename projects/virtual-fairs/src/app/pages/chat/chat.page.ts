@@ -29,7 +29,7 @@ import {EntityDTO, EventDTO} from '../../models';
           </mat-action-list>
         </mat-sidenav>
         <mat-sidenav-content>
-          <chat [entity]="room"></chat>
+          <chat [entity]="room" fxLayout="row" fxFill></chat>
         </mat-sidenav-content>
       </mat-sidenav-container>
     </ng-container>

@@ -2,7 +2,7 @@ import {Component, OnDestroy} from '@angular/core';
 import {FormControl, FormGroup, Validators} from '@angular/forms';
 import {SocketService} from '../../services/socket.service';
 import {SocketCall, SocketEvent} from '../../models';
-import {Router} from '@angular/router';
+import {ActivatedRoute, Router} from '@angular/router';
 import {MatSnackBar} from '@angular/material/snack-bar';
 
 @Component({
@@ -52,6 +52,7 @@ export class LoginComponent implements OnDestroy {
 
   constructor(private socketService: SocketService,
               private router: Router,
+              private route: ActivatedRoute,
               private snackBar: MatSnackBar) {
     this.form = new FormGroup({
       email: new FormControl(null, [Validators.required, Validators.email]),
@@ -59,7 +60,8 @@ export class LoginComponent implements OnDestroy {
     });
     this.subscription = this.socketService.from$<boolean>(SocketEvent.AUTHORIZATION).subscribe(authorized => {
       if (authorized) {
-        this.router.navigate(['/room']);
+        const returnUrl = this.route.snapshot.queryParams['returnUrl'];
+        returnUrl ? this.router.navigateByUrl(returnUrl) : this.router.navigate(['/room']);
       } else {
         this.snackBar.open('Login error', null, {duration: 2000})
       }

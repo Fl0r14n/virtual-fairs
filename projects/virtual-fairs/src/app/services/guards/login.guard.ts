@@ -19,7 +19,7 @@ export class LoginGuard implements CanActivate {
     return this.socketService.from$<boolean>(SocketEvent.AUTHORIZATION).pipe(
       tap(authorized => {
         if (!authorized) {
-          this.router.navigate(['/login']);
+          this.router.navigate(['/login'], {queryParams: {returnUrl: state.url}});
         }
       })
     )
