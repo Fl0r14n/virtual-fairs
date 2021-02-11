@@ -15,25 +15,12 @@ export interface OptionElement<T> {
   valueChanged?: (T) => void;
 }
 
-export interface EntityDTO {
-  id: string;
-  name?: string;
-  description?: string;
-  image?: string
-  peerId?: string;
-}
-
-export interface MessageDTO {
-  from: EntityDTO;
-  to?: EntityDTO;
-  message?: string;
-}
-
 export enum SocketCall {
   LOGIN = 'login',
   LOGOUT = 'logout',
   PEER = 'peer',
   ROOM_CONNECT = 'room:connect',
+  ROOM_DISCONNECT = 'room:disconnect',
   ROOM_MESSAGE = 'room:message'
 }
 
@@ -48,8 +35,33 @@ export enum SocketEvent {
   ROOM_MESSAGE = 'room:message',
 }
 
-export interface EventDTO {
+export interface EntityDTO {
+  id: string;
+  name?: string;
+  description?: string;
+  image?: string
+  peerId?: string;
+}
+
+export interface RoomDTO {
+  roomId: string;
+}
+
+export interface MessageDTO extends RoomDTO {
+  from: EntityDTO;
+  to?: EntityDTO;
+  message?: string;
+}
+
+export interface RosterDTO extends RoomDTO, EntityDTO {
+}
+
+export interface RosterListDTO extends RoomDTO {
+  roster?: EntityDTO[];
+}
+
+export interface EventDTO extends RoomDTO {
   type: SocketEvent,
-  data: MessageDTO | EntityDTO;
+  data: MessageDTO | RosterDTO;
   timestamp: Date
 }

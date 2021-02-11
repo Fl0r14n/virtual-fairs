@@ -1,7 +1,8 @@
-import {Component, Input} from '@angular/core';
+import {Component, ElementRef, Input, OnInit, ViewChild} from '@angular/core';
 import {EntityDTO, EventDTO, MessageDTO, SocketEvent} from '../../models';
 import {ChatService} from '../../services/chat.service';
 import {Observable} from 'rxjs';
+import {tap} from 'rxjs/operators';
 
 @Component({
   selector: 'chat',
@@ -19,8 +20,7 @@ import {Observable} from 'rxjs';
         <span fxFlex="1 1 auto"></span>
         <call-option></call-option>
       </mat-card-header>
-      <mat-card-content fxFlex="1 1 auto">
-
+      <mat-card-content fxFlex="1 1 auto" #cardContent>
         <mat-list *ngIf="events$ | async as events">
           <ng-container *ngFor="let event of events; index as i">
             <ng-container *ngIf="event.type === type.ROOM_USER_CONNECT">
@@ -46,7 +46,6 @@ import {Observable} from 'rxjs';
             </ng-container>
           </ng-container>
         </mat-list>
-
       </mat-card-content>
       <div>
         <mat-card-actions fxLayoutAlign="center">
@@ -64,7 +63,7 @@ import {Observable} from 'rxjs';
     </mat-card>
   `
 })
-export class ChatComponent {
+export class ChatComponent implements OnInit {
 
   @Input()
   entity: EntityDTO;
@@ -72,12 +71,20 @@ export class ChatComponent {
   events$: Observable<EventDTO[]>;
   type = SocketEvent;
 
+  @ViewChild('cardContent', {static: true})
+  cardContent: ElementRef;
+
   constructor(private chatService: ChatService) {
-    this.events$ = this.chatService.events$;
+  }
+
+  ngOnInit(): void {
+    this.events$ = this.chatService.events$(this.entity.id).pipe(
+      tap(() => this.followScroll())
+    );
   }
 
   send() {
-    this.message && this.message.length > 0 && this.chatService.send(this.message);
+    this.message && this.message.length > 0 && this.chatService.send(this.entity.id, this.message);
   }
 
   align(from: EntityDTO) {
@@ -94,5 +101,16 @@ export class ChatComponent {
       }
     }
     return true;
+  }
+
+  followScroll() {
+    const {nativeElement} = this.cardContent;
+    if (nativeElement) {
+      nativeElement.scrollTo({
+        left: 0,
+        top: nativeElement.scrollHeight,
+        behavior: 'smooth'
+      })
+    }
   }
 }

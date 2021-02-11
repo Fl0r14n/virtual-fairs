@@ -86,7 +86,31 @@ const toUser = (socket) => {
 
 const getRoster = (roomId) => {
   const clients = io.sockets.adapter.rooms.get(roomId);
-  return Array.from(clients).map(c => toUser(io.sockets.sockets.get(c)));
+  return clients ? Array.from(clients).map(c => toUser(io.sockets.sockets.get(c))) : [];
+}
+
+const joinRoom = (socket, roomId) => {
+  socket.join(roomId);
+  io.in(roomId).emit('room:roster', {
+    roomId,
+    roster: getRoster(roomId)
+  })
+  socket.to(roomId).emit('room:user:connect', {
+    roomId,
+    ...toUser(socket)
+  });
+}
+
+const leaveRoom = (socket, roomId) => {
+  socket.leave(roomId);
+  socket.to(roomId).emit('room:user:disconnect', {
+    roomId,
+    ...toUser(socket)
+  });
+  io.in(roomId).emit('room:roster', {
+    roomId,
+    roster: getRoster(roomId)
+  })
 }
 
 io.on('connection', socket => {
@@ -127,24 +151,29 @@ io.on('connection', socket => {
   socket.on('room:connect', (roomId) => {
     const room = rooms.find(r => r.id === roomId);
     if (room) {
-      socket.join(roomId);
       socket.emit('room', room);
-      io.in(roomId).emit('room:roster', getRoster(roomId))
-      socket.to(roomId).emit('room:user:connect', toUser(socket));
 
-      socket.on('room:disconnect', () => {
-        socket.leave(roomId);
-        socket.to(roomId).emit('room:user:disconnect', toUser(socket));
-      })
+      joinRoom(socket, roomId);
+
+      socket.on('room:disconnect', (fromRoomId) => {
+        if (roomId === fromRoomId) {
+          leaveRoom(socket, roomId);
+        }
+      });
 
       socket.on('disconnect', () => {
-        socket.leave(roomId);
-        socket.to(roomId).emit('room:user:disconnect', toUser(socket));
-      })
+        leaveRoom(socket, roomId);
+      });
 
-      socket.on('room:message', (from, message) => {
-        io.in(roomId).emit('room:message', {from, message});
-      })
+      socket.on('room:message', (fromRoomId, from, message) => {
+        if (roomId === fromRoomId) {
+          io.in(roomId).emit('room:message', {
+            roomId,
+            from,
+            message
+          });
+        }
+      });
     }
   })
 });
