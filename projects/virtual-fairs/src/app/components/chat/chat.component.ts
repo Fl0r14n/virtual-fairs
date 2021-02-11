@@ -89,7 +89,10 @@ export class ChatComponent {
   }
 
   send() {
-    this.message && this.message.length > 0 && this.chatService.send(this.entity.id, this.message);
+    if (this.message && this.message.length > 0) {
+      this.chatService.send(this.entity.id, this.message);
+      this.message = '';
+    }
   }
 
   alignSender(from: EntityDTO) {

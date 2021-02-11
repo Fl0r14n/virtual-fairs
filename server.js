@@ -123,57 +123,66 @@ io.on('connection', socket => {
   socket.emit('authorization', false);
 
   socket.on('login', (name, password, callback) => {
-    const user = users.find(u => u.email === name && u.password === password);
-    if (user) {
-      socket.name = user.name;
-      socket.image = user.image
+    const found = users.find(u => u.email === name && u.password === password);
+    if (found) {
+      socket.name = found.name;
+      socket.image = found.image
+      const user = toUser(socket);
+      callback && callback(user);
       socket.emit('authorization', true);
-      socket.emit('user', toUser(socket));
+      socket.emit('user', user);
       socket.emit('rooms', rooms);
-      callback && callback(toUser(socket));
     } else {
+      callback && callback();
       socket.emit('authorization', false);
     }
   })
 
-  socket.on('logout', () => {
+  socket.on('logout', (callback) => {
     socket.name = undefined;
     socket.image = undefined;
     socket.peerId = undefined;
+    callback && callback();
     socket.emit('authorization', false);
   });
 
   socket.on('peer', (peerId, callback) => {
     socket.peerId = peerId;
-    socket.emit('user', toUser(socket));
-    callback && callback(toUser(socket));
-  })
+    const user = toUser(socket);
+    callback && callback(user);
+    socket.emit('user', user);
+  });
 
-  socket.on('user', () => {
-    socket.emit('user', toUser(socket));
-  })
+  socket.on('user', (callback) => {
+    const user = toUser(socket)
+    callback && callback(user);
+    socket.emit('user', user);
+  });
 
-  socket.on('room:disconnect', (roomId) => {
+  socket.on('room:disconnect', (roomId, callback) => {
+    callback && callback();
     isJoined(socket, roomId) && leaveRoom(socket, roomId);
   });
 
-  socket.on('room:connect', (roomId) => {
+  socket.on('room:connect', (roomId, callback) => {
     const room = rooms.find(r => r.id === roomId);
     if (room) {
-      socket.emit('room', room);
       joinRoom(socket, roomId);
+      socket.emit('room', room);
       socket.once('disconnect', () => {
         leaveRoom(socket, roomId);
       });
     }
+    callback && callback(room);
   });
 
-  socket.on('room:message', (roomId, from, message) => {
+  socket.on('room:message', (roomId, from, message, callback) => {
     isJoined(socket, roomId) && io.in(roomId).emit('room:message', {
       roomId,
       from,
       message
     });
+    callback && callback();
   });
 });
 
