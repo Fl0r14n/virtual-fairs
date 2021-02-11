@@ -1,7 +1,7 @@
-import {Component, ElementRef, Input, OnInit, ViewChild} from '@angular/core';
+import {Component, ElementRef, Input, ViewChild} from '@angular/core';
 import {EntityDTO, EventDTO, MessageDTO, SocketEvent} from '../../models';
 import {ChatService} from '../../services/chat.service';
-import {Observable} from 'rxjs';
+import {Observable, Subject} from 'rxjs';
 import {tap} from 'rxjs/operators';
 
 @Component({
@@ -35,12 +35,12 @@ import {tap} from 'rxjs/operators';
             </ng-container>
             <ng-container *ngIf="event.type === type.ROOM_MESSAGE">
               <ng-container *ngIf="showSender(event, i, events)">
-                <mat-list-item mat-subheader *ngIf="event.data.from as from" [fxLayoutAlign]="align(from)">
+                <mat-list-item mat-subheader *ngIf="event.data.from as from" [fxLayoutAlign]="alignSender(from)">
                   <img matListAvatar [src]="from.image">
                   <span>{{from.name}}, {{event.timestamp | date:'shortTime'}}</span>
                 </mat-list-item>
               </ng-container>
-              <mat-list-item [fxLayoutAlign]="align(event.data.from)">
+              <mat-list-item [fxLayoutAlign]="alignSender(event.data.from)">
                 {{event.data.message}}
               </mat-list-item>
             </ng-container>
@@ -63,31 +63,36 @@ import {tap} from 'rxjs/operators';
     </mat-card>
   `
 })
-export class ChatComponent implements OnInit {
+export class ChatComponent {
 
-  @Input()
-  entity: EntityDTO;
+  private _entity: EntityDTO;
   message: string;
-  events$: Observable<EventDTO[]>;
+  events$: Observable<EventDTO[]> = new Subject();
   type = SocketEvent;
 
   @ViewChild('cardContent', {static: true})
   cardContent: ElementRef;
 
-  constructor(private chatService: ChatService) {
+  get entity(): EntityDTO {
+    return this._entity;
   }
 
-  ngOnInit(): void {
+  @Input()
+  set entity(value: EntityDTO) {
+    this._entity = value;
     this.events$ = this.chatService.events$(this.entity.id).pipe(
       tap(() => this.followScroll())
     );
+  }
+
+  constructor(private chatService: ChatService) {
   }
 
   send() {
     this.message && this.message.length > 0 && this.chatService.send(this.entity.id, this.message);
   }
 
-  align(from: EntityDTO) {
+  alignSender(from: EntityDTO) {
     return from.id === this.chatService.user.id ? 'end' : 'start'
   }
 

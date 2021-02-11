@@ -51,8 +51,7 @@ export class ChatPageComponent {
     this.page$ = route.params.pipe(
       map(v => v.roomId),
       tap(roomId => {
-        if(this._roomId && this._roomId !== roomId) {
-          console.log('Leave room', this._roomId, 'to', roomId);
+        if (this._roomId && this._roomId !== roomId) {
           this.chatService.leave(this._roomId);
         }
         this.chatService.join(roomId);

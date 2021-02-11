@@ -113,6 +113,11 @@ const leaveRoom = (socket, roomId) => {
   })
 }
 
+const isJoined = (socket, roomId) => {
+  const room = io.sockets.adapter.rooms.get(roomId);
+  return room && room.has(socket.id);
+}
+
 io.on('connection', socket => {
   socket.emit('connected', true);
   socket.emit('authorization', false);
@@ -148,34 +153,28 @@ io.on('connection', socket => {
     socket.emit('user', toUser(socket));
   })
 
+  socket.on('room:disconnect', (roomId) => {
+    isJoined(socket, roomId) && leaveRoom(socket, roomId);
+  });
+
   socket.on('room:connect', (roomId) => {
     const room = rooms.find(r => r.id === roomId);
     if (room) {
       socket.emit('room', room);
-
       joinRoom(socket, roomId);
-
-      socket.on('room:disconnect', (fromRoomId) => {
-        if (roomId === fromRoomId) {
-          leaveRoom(socket, roomId);
-        }
-      });
-
-      socket.on('disconnect', () => {
+      socket.once('disconnect', () => {
         leaveRoom(socket, roomId);
       });
-
-      socket.on('room:message', (fromRoomId, from, message) => {
-        if (roomId === fromRoomId) {
-          io.in(roomId).emit('room:message', {
-            roomId,
-            from,
-            message
-          });
-        }
-      });
     }
-  })
+  });
+
+  socket.on('room:message', (roomId, from, message) => {
+    isJoined(socket, roomId) && io.in(roomId).emit('room:message', {
+      roomId,
+      from,
+      message
+    });
+  });
 });
 
 
