@@ -1,4 +1,4 @@
-import {ChangeDetectorRef, Component, OnDestroy} from '@angular/core';
+import {Component} from '@angular/core';
 import {MediaMatcher} from '@angular/cdk/layout';
 import {SocketService} from '../../services/socket.service';
 import {EntityDTO, SocketEvent} from '../../models';
@@ -36,25 +36,15 @@ import {Observable} from 'rxjs';
   `,
   styleUrls: ['layout.page.scss']
 })
-export class LayoutPageComponent implements OnDestroy {
-
-  private _mobileQueryListener: () => void;
+export class LayoutPageComponent {
 
   mobileQuery: MediaQueryList;
-
   rooms$: Observable<EntityDTO>;
 
-  constructor(changeDetectorRef: ChangeDetectorRef,
-              media: MediaMatcher,
+  constructor(media: MediaMatcher,
               socketService: SocketService) {
     this.mobileQuery = media.matchMedia('(max-width: 600px)');
-    this._mobileQueryListener = () => changeDetectorRef.detectChanges();
-    this.mobileQuery.addListener(this._mobileQueryListener);
     this.rooms$ = socketService.from$<EntityDTO>(SocketEvent.ROOMS);
-  }
-
-  ngOnDestroy(): void {
-    this.mobileQuery.removeListener(this._mobileQueryListener);
   }
 
   getRoomLink(id) {

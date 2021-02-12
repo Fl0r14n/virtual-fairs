@@ -25,6 +25,7 @@ import {MatListModule} from '@angular/material/list';
 import {ChatComponent} from './components/chat/chat.component';
 import {MatSnackBarModule} from '@angular/material/snack-bar';
 import {FlexModule} from "@angular/flex-layout";
+import {CallPageComponent} from './pages/call/call.page';
 
 const components = [
   CallSettingsComponent,
@@ -35,7 +36,8 @@ const components = [
   RoomPageComponent,
   ChatPageComponent,
   LoginComponent,
-  ChatComponent
+  ChatComponent,
+  CallPageComponent
 ]
 
 @NgModule({

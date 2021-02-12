@@ -1,3 +1,5 @@
+import {Observer} from 'rxjs';
+
 export enum OptionType {
   AUDIO,
   VIDEO,
@@ -21,7 +23,10 @@ export enum SocketCall {
   PEER = 'peer',
   ROOM_CONNECT = 'room:connect',
   ROOM_DISCONNECT = 'room:disconnect',
-  ROOM_MESSAGE = 'room:message'
+  ROOM_MESSAGE = 'room:message',
+  ROOM_CALL = 'room:call',
+  ROOM_CALL_CONNECT = 'room:call:connect',
+  ROOM_CALL_DISCONNECT = 'room:call:disconnect'
 }
 
 export enum SocketEvent {
@@ -33,6 +38,16 @@ export enum SocketEvent {
   ROOM_USER_CONNECT = 'room:user:connect',
   ROOM_USER_DISCONNECT = 'room:user:disconnect',
   ROOM_MESSAGE = 'room:message',
+  ROOM_CALL = 'room:call',
+  ROOM_CALL_CONNECT = 'room:call:connect',
+  ROOM_CALL_DISCONNECT = 'room:call:disconnect'
+}
+
+export enum PeerEvent {
+  CALL,
+  STREAM,
+  CLOSE,
+  DATA
 }
 
 export interface EntityDTO {
@@ -47,21 +62,29 @@ export interface RoomDTO {
   roomId: string;
 }
 
-export interface MessageDTO extends RoomDTO {
+export interface RoomMessageDTO extends RoomDTO {
   from: EntityDTO;
   to?: EntityDTO;
   message?: string;
 }
 
-export interface RosterDTO extends RoomDTO, EntityDTO {
+export interface RoomEntityDTO extends RoomDTO, EntityDTO {
 }
 
-export interface RosterListDTO extends RoomDTO {
+export interface RoomRosterDTO extends RoomDTO {
   roster?: EntityDTO[];
 }
 
 export interface EventDTO extends RoomDTO {
-  type: SocketEvent,
-  data: MessageDTO | RosterDTO;
-  timestamp: Date
+  type: SocketEvent;
+  timestamp: Date;
+
+  [x: string]: any;
+}
+
+export interface PeerEventDTO {
+  type: PeerEvent,
+  // to: string;
+  // from: string;
+  data?: MediaStream,
 }

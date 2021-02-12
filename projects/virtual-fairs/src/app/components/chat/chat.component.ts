@@ -1,5 +1,5 @@
 import {Component, ElementRef, Input, ViewChild} from '@angular/core';
-import {EntityDTO, EventDTO, MessageDTO, SocketEvent} from '../../models';
+import {EntityDTO, EventDTO, RoomMessageDTO, SocketEvent} from '../../models';
 import {ChatService} from '../../services/chat.service';
 import {Observable, Subject} from 'rxjs';
 import {tap} from 'rxjs/operators';
@@ -18,30 +18,30 @@ import {tap} from 'rxjs/operators';
         <mat-card-title>{{entity.name}}</mat-card-title>
         <mat-card-subtitle>{{entity.description}}</mat-card-subtitle>
         <span fxFlex="1 1 auto"></span>
-        <call-option></call-option>
+        <call-option (valueChange)="call($event)"></call-option>
       </mat-card-header>
       <mat-card-content fxFlex="1 1 auto" #cardContent>
         <mat-list *ngIf="events$ | async as events">
           <ng-container *ngFor="let event of events; index as i">
             <ng-container *ngIf="event.type === type.ROOM_USER_CONNECT">
               <div mat-subheader fxLayoutAlign="center">
-                {{event.data.name}}&nbsp;connected,&nbsp;{{event.timestamp | date:'shortTime'}}
+                {{event.name}}&nbsp;connected,&nbsp;{{event.timestamp | date:'shortTime'}}
               </div>
             </ng-container>
             <ng-container *ngIf="event.type === type.ROOM_USER_DISCONNECT">
               <div mat-subheader fxLayoutAlign="center">
-                {{event.data.name}}&nbsp;disconnected&nbsp;{{event.timestamp | date:'shortTime'}}
+                {{event.name}}&nbsp;disconnected&nbsp;{{event.timestamp | date:'shortTime'}}
               </div>
             </ng-container>
             <ng-container *ngIf="event.type === type.ROOM_MESSAGE">
               <ng-container *ngIf="showSender(event, i, events)">
-                <mat-list-item mat-subheader *ngIf="event.data.from as from" [fxLayoutAlign]="alignSender(from)">
+                <mat-list-item mat-subheader *ngIf="event.from as from" [fxLayoutAlign]="alignSender(from)">
                   <img matListAvatar [src]="from.image">
                   <span>{{from.name}}, {{event.timestamp | date:'shortTime'}}</span>
                 </mat-list-item>
               </ng-container>
-              <mat-list-item [fxLayoutAlign]="alignSender(event.data.from)">
-                {{event.data.message}}
+              <mat-list-item [fxLayoutAlign]="alignSender(event.from)">
+                {{event.message}}
               </mat-list-item>
             </ng-container>
           </ng-container>
@@ -66,8 +66,9 @@ import {tap} from 'rxjs/operators';
 export class ChatComponent {
 
   private _entity: EntityDTO;
+  user: EntityDTO;
   message: string;
-  events$: Observable<EventDTO[]> = new Subject();
+  events$: Observable<EventDTO[]>;
   type = SocketEvent;
 
   @ViewChild('cardContent', {static: true})
@@ -103,9 +104,9 @@ export class ChatComponent {
     if (i > 0) {
       const previous = events[i - 1];
       if (previous.type === SocketEvent.ROOM_MESSAGE) {
-        const message = event.data as MessageDTO;
-        const previousMessage = previous.data as MessageDTO;
-        return message.from.id !== previousMessage.from.id;
+        const from = event.from as EntityDTO;
+        const previousFrom = previous.from as EntityDTO;
+        return from.id !== previousFrom.id;
       }
     }
     return true;
@@ -120,5 +121,10 @@ export class ChatComponent {
         behavior: 'smooth'
       })
     }
+  }
+
+  call($event) {
+    console.log($event);
+    this.chatService.call(this.entity.id);
   }
 }

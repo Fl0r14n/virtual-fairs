@@ -1,16 +1,24 @@
 import {Injectable} from '@angular/core';
 import {SocketService} from './socket.service';
-import Peer from 'peerjs';
-import {EntityDTO, EventDTO, MessageDTO, RosterDTO, RosterListDTO, SocketCall, SocketEvent} from '../models';
+import {
+  EntityDTO,
+  EventDTO,
+  RoomMessageDTO,
+  RoomDTO,
+  RoomEntityDTO,
+  RoomRosterDTO,
+  SocketCall,
+  SocketEvent
+} from '../models';
 import {merge, Observable} from 'rxjs';
 import {filter, map} from 'rxjs/operators';
+import {PeerService} from './peer.service';
 
-const toEvent = (e: RosterDTO | MessageDTO, type: SocketEvent): EventDTO => {
+const toEvent = (e: RoomEntityDTO | RoomMessageDTO | RoomDTO, type: SocketEvent): EventDTO => {
   return {
-    roomId: e.roomId,
     type,
-    data: e,
-    timestamp: new Date()
+    timestamp: new Date(),
+    ...e
   }
 }
 
@@ -20,32 +28,39 @@ const toEvent = (e: RosterDTO | MessageDTO, type: SocketEvent): EventDTO => {
 export class ChatService {
 
   private _events$: Observable<EventDTO>;
-  private _peer: Peer;
-  private _roster$: Observable<RosterListDTO>;
+  private _roster$: Observable<RoomRosterDTO>;
   room$: Observable<EntityDTO>;
-  user: EntityDTO;
 
-  constructor(private socketService: SocketService) {
-    this.user = {id: this.socketService.socket};
-    this._peer = new Peer();
-    this._peer.on('open', peerId => {
-      this.socketService.to<EntityDTO>(SocketCall.PEER, peerId).then(user => this.user = user);
-    })
+  get user() {
+    return this.peerService.user;
+  }
+
+  constructor(private socketService: SocketService,
+              private peerService: PeerService) {
     this.room$ = this.socketService.from$<EntityDTO>(SocketEvent.ROOM);
-    this._roster$ = this.socketService.from$<RosterListDTO>(SocketEvent.ROOM_ROSTER);
-    const roomUserConnect$ = this.socketService.from$<RosterDTO>(SocketEvent.ROOM_USER_CONNECT).pipe(
+    this._roster$ = this.socketService.from$<RoomRosterDTO>(SocketEvent.ROOM_ROSTER);
+    const roomUserConnect$ = this.socketService.from$<RoomEntityDTO>(SocketEvent.ROOM_USER_CONNECT).pipe(
       map(e => toEvent(e, SocketEvent.ROOM_USER_CONNECT))
     );
-    const roomUserDisconnect$ = this.socketService.from$<RosterDTO>(SocketEvent.ROOM_USER_DISCONNECT).pipe(
+    const roomUserDisconnect$ = this.socketService.from$<RoomEntityDTO>(SocketEvent.ROOM_USER_DISCONNECT).pipe(
       map(e => toEvent(e, SocketEvent.ROOM_USER_DISCONNECT))
     );
-    const roomMessage$ = this.socketService.from$<MessageDTO>(SocketEvent.ROOM_MESSAGE).pipe(
+    const roomMessage$ = this.socketService.from$<RoomMessageDTO>(SocketEvent.ROOM_MESSAGE).pipe(
       map(e => toEvent(e, SocketEvent.ROOM_MESSAGE))
+    );
+    const roomCall$ = this.socketService.from$<RoomDTO>(SocketEvent.ROOM_CALL).pipe(
+      map(e => toEvent(e, SocketEvent.ROOM_CALL))
+    );
+    const roomCallConnect$ = this.socketService.from$<RoomEntityDTO>(SocketEvent.ROOM_CALL_CONNECT).pipe(
+      map(e => toEvent(e, SocketEvent.ROOM_CALL_CONNECT))
+    );
+    const roomCallDisconnect$ = this.socketService.from$<RoomEntityDTO>(SocketEvent.ROOM_CALL_DISCONNECT).pipe(
+      map(e => toEvent(e, SocketEvent.ROOM_CALL_DISCONNECT))
     );
     this._events$ = merge(roomUserConnect$, roomUserDisconnect$, roomMessage$);
   }
 
-  roster$(roomId: string): Observable<RosterListDTO> {
+  roster$(roomId: string): Observable<RoomRosterDTO> {
     return this._roster$.pipe(filter(r => r.roomId === roomId));
   }
 
@@ -70,5 +85,17 @@ export class ChatService {
 
   async send(roomId: string, message: string) {
     await this.socketService.to(SocketCall.ROOM_MESSAGE, roomId, this.user, message);
+  }
+
+  async call(roomId: string) {
+    await this.socketService.to(SocketCall.ROOM_CALL, roomId);
+  }
+
+  async callAnswer(roomId: string) {
+    await this.socketService.to(SocketCall.ROOM_CALL_CONNECT, this.user);
+  }
+
+  async callDrop(roomId: string) {
+    await this.socketService.to(SocketCall.ROOM_CALL_DISCONNECT, this.user);
   }
 }

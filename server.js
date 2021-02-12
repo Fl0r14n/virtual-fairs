@@ -89,8 +89,10 @@ const getRoster = (roomId) => {
   return clients ? Array.from(clients).map(c => toUser(io.sockets.sockets.get(c))) : [];
 }
 
-const joinRoom = (socket, roomId) => {
+const joinRoom = (socket, room) => {
+  const roomId = room.id;
   socket.join(roomId);
+  socket.emit('room', room);
   io.in(roomId).emit('room:roster', {
     roomId,
     roster: getRoster(roomId)
@@ -101,7 +103,8 @@ const joinRoom = (socket, roomId) => {
   });
 }
 
-const leaveRoom = (socket, roomId) => {
+const leaveRoom = (socket, room) => {
+  const roomId = room.id;
   socket.leave(roomId);
   socket.to(roomId).emit('room:user:disconnect', {
     roomId,
@@ -167,10 +170,9 @@ io.on('connection', socket => {
   socket.on('room:connect', (roomId, callback) => {
     const room = rooms.find(r => r.id === roomId);
     if (room) {
-      joinRoom(socket, roomId);
-      socket.emit('room', room);
+      joinRoom(socket, room);
       socket.once('disconnect', () => {
-        leaveRoom(socket, roomId);
+        leaveRoom(socket, room);
       });
     }
     callback && callback(room);
@@ -181,6 +183,27 @@ io.on('connection', socket => {
       roomId,
       from,
       message
+    });
+    callback && callback();
+  });
+
+  socket.on('room:call', (roomId, callback) => {
+    isJoined(socket, roomId) && io.in(roomId).emit('room:call');
+    callback && callback();
+  });
+
+  socket.on('room:call:connect', (roomId, user, callback) => {
+    isJoined(socket, roomId) && socket.to(roomId).emit('room:call:connect', {
+      roomId,
+      ...user
+    });
+    callback && callback();
+  });
+
+  socket.on('room:call:disconnect', (roomId, user, callback) => {
+    isJoined(socket, roomId) && socket.to(roomId).emit('room:call:disconnect', {
+      roomId,
+      ...user
     });
     callback && callback();
   });

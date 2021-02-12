@@ -3,13 +3,17 @@ import {ActivatedRoute} from '@angular/router';
 import {map, tap} from 'rxjs/operators';
 import {Observable} from 'rxjs';
 import {ChatService} from '../../services/chat.service';
-import {EntityDTO, RosterListDTO} from '../../models';
+import {EntityDTO, RoomRosterDTO} from '../../models';
+import {MediaMatcher} from '@angular/cdk/layout';
 
 @Component({
   template: `
     <ng-container *ngIf="page$ | async as page">
       <mat-sidenav-container class="{{page}}" fxFill *ngIf="room$ | async as room">
-        <mat-sidenav opened mode="side">
+        <mat-sidenav #snav
+                     [opened]="!mobileQuery.matches"
+                     [mode]="mobileQuery.matches ? 'over' : 'side'"
+                     [fixedInViewport]="mobileQuery.matches">
           <mat-toolbar>
             <mat-list>
               <mat-list-item>
@@ -42,12 +46,15 @@ import {EntityDTO, RosterListDTO} from '../../models';
 export class ChatPageComponent {
 
   private _roomId;
+  mobileQuery: MediaQueryList;
   page$: Observable<string>;
   roster$: Observable<EntityDTO[]>;
   room$: Observable<EntityDTO>;
 
   constructor(route: ActivatedRoute,
+              media: MediaMatcher,
               private chatService: ChatService) {
+    this.mobileQuery = media.matchMedia('(max-width: 600px)');
     this.page$ = route.params.pipe(
       map(v => v.roomId),
       tap(roomId => {
